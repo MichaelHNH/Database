@@ -91,11 +91,12 @@ void setup(void)
 void loop()
 {
   radar.read();
-  if(radar.isConnected() && millis() - lastReading > 300000)  //Report every 300000ms, or every 5th minute.
+  if(radar.isConnected() && millis() - lastReading > 1000)  //Report every 1000ms
   {
     lastReading = millis();
-    if(radar.presenceDetected())
+    if (radar.presenceDetected())
     {
+    bool printed = false;
       if(radar.stationaryTargetDetected())
       {
         Serial.print(F("Stationary target: "));

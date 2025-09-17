@@ -6,12 +6,13 @@ def readarduino():
         data = ser.readline().decode().strip()
         if "stationarytarget" in data or "movingtarget" in data:
             return true
-        elif "notarget" in data
+        elif "notarget" in data:
             return false
 
-while true:
+while True:
     status = readarduino
 
     time.sleep(1)
 
 if __name__ == '__main__':
+    True

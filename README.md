@@ -1,0 +1,7 @@
+# Database
+
+[Miro](https://miro.com/welcomeonboard/ZXh0UE0xSzg3dHM3ai9KeUU2Z0JkMjJyRVFwaGJRRU1JUlJVYVRWQjl5azZRVTBpZzgxRC9scHVKVVRjZlJMOUhnemU0TzF0YzhqZWJLMGEvRnc4b3dMZzI0OWsvSis1dDVhYXlCYmx5bER1ZGcyMi9TYUp5YjlFL1FEQWVUWERzVXVvMm53MW9OWFg5bkJoVXZxdFhRPT0hdjE=?share_link_id=795316296577)
+
+[Trello](https://trello.com/invite/b/68af0137174495270a74ca0c/ATTIfe95eba66378cbb83fc0b8de30b05a1b1F519CCA/database-ting)
+
+

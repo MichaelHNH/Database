@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Grupperum</title>
+</head>
+<body>
+    <h1>Status for grupperum</h1>
+    <ul>
+        {% for room in rooms %}
+        <li>
+            <strong>{{ room.name }}</strong> –
+            {% if room.is_free %}
+                <span style="color:green;">Ledigt</span>
+                </form>
+            {% else %}
+                <span style="color:red;">Optaget</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

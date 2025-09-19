@@ -18,9 +18,8 @@
     }
 
     .room {
-      stroke: black;
-      stroke-width: 2px;
       cursor: pointer;
+      opacity: 0.8;
     }
 
     .ledigt {
@@ -30,25 +29,22 @@
     .optaget {
       fill: lightcoral;
     }
-    object {
-  display: block;
-  margin: auto;
-    }
-
   </style>
 </head>
 <body>
-<object type="image/svg+xml"
-        data="{{ url_for('static', filename='mega seje plan tegninger transparent 3.etager.svg') }}"
-        width="80%" height="auto">
-</object>
   <svg viewBox="0 0 800 600">
-    <a href="/room/1">
-      <rect id="D2323" class="room ledigt" x="50" y="50" width="120" height="80"></rect>
+    <image href="{{ url_for('static', filename='Aktiv 2.svg') }}"
+           width="800" height="600" />
+
+    <a href="/room/3">
+      <rect id="D223" class="room ledigt" x="302" y="170" width="10" height="5"></rect>
     </a>
-    <a href="/room/2">
-        <rect id="D2201" class="room optaget" x="200" y="50" width="120"></rect>
+    <a href="/room/4">
+      <rect id="D222" class="room ledigt" x="324" y="172" width="10" height="5"></rect>
     </a>
-        </svg>
+    <a href="/room/5">
+      <rect id="D224" class="room ledigt" x="315" y="160" width="10" height="5"></rect>
+    </a>
+  </svg>
 </body>
 </html>

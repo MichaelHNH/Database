@@ -4,15 +4,19 @@ app = Flask(__name__)
 
 #Ingen data, så bare hardcoded
 rooms = [
-    {"id": 1, "name": "D2323", "is_free": True},
-    {"id": 2, "name": "D2201", "is_free": False},
-    {"id": 3, "name": "D2101", "is_free": True},
-    {"id": 4, "name": "D2110", "is_free": True},
+    {"id": 1, "name": "D316a", "is_free": True},
+    {"id": 2, "name": "D315", "is_free": True},
+    {"id": 3, "name": "D223", "is_free": True},
+    {"id": 4, "name": "D222", "is_free": True},
+    {"id": 5, "name": "D224", "is_free": True},
+    {"id": 6, "name": "D163", "is_free": True},
+    {"id": 7, "name": "D164", "is_free": True},
+    {"id": 8, "name": "D166", "is_free": True},
 ]
 
 @app.route('/')
 def index():
-    return render_template("map.html", rooms=rooms)
+    return render_template("map1.html", rooms=rooms)
 #Viser rum baseret på id
 @app.route('/room/<int:room_id>')
 def rummap(room_id):

@@ -17,6 +17,19 @@ rooms = [
 @app.route('/')
 def index():
     return render_template("map1.html", rooms=rooms)
+
+@app.route('/map1')
+def map1():
+    return render_template("map1.html", rooms=rooms)
+
+@app.route('/map2')
+def map2():
+    return render_template("map2.html", rooms=rooms)
+
+@app.route('/map3')
+def map3():
+    return render_template("map3.html", rooms=rooms)
+
 #Viser rum baseret på id
 @app.route('/room/<int:room_id>')
 def rummap(room_id):

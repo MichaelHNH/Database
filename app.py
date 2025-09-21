@@ -2,7 +2,7 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-#Ingen data, så bare hardcoded
+#rumnumre
 rooms = [
     {"id": 1, "name": "D316a", "is_free": True},
     {"id": 2, "name": "D315", "is_free": True},
@@ -20,14 +20,22 @@ def index():
 
 @app.route('/map1')
 def map1():
+    # Opdater rum-status fra database.txt
+    for r in rooms:
+        r["is_free"] = room_status(r["id"])
     return render_template("map1.html", rooms=rooms)
+
 
 @app.route('/map2')
 def map2():
+    for r in rooms:
+        r["is_free"] = room_status(r["id"])
     return render_template("map2.html", rooms=rooms)
 
 @app.route('/map3')
 def map3():
+    for r in rooms:
+        r["is_free"] = room_status(r["id"])
     return render_template("map3.html", rooms=rooms)
 
 #Viser rum baseret på id
@@ -37,6 +45,24 @@ def rummap(room_id):
     if not room:
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
+
+def room_status(room_id):
+    is_free = True #gør standard til = ledigt
+    try:
+        with open("database.txt", "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            # læser fra bunden, da txt filen nok opdatere, og så finder status på rummene #Højst sandsynligt ændres data base til sqlite
+            for line in reversed(lines):
+                if f"room={room_id}" in line:
+                    if "occupied" in line:
+                        is_free = False
+                    elif "free" in line:
+                        is_free = True
+                    break
+    except FileNotFoundError:
+        pass
+    return is_free
+
 
 if __name__ == '__main__':
     app.run(debug=True)

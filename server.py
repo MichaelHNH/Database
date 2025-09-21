@@ -20,12 +20,13 @@ def readarduino():
 
             # Match both stationary and moving targets
             m = re.search(r"(stationary|moving) target: (\d+)cm energy:(\d+)", datal)
+            room_id = 1 #1 = rum 1, det skal være der hvor senssoren er
+
             if m:
                 _, dist, energy = m.groups()
-                status_line = f"{ts} | target | distance={dist} | energy={energy}"
-
+                status_line = f"{ts} | room={room_id} | occupied | distance={dist} | energy={energy}"#Måske mange ligegyldige variabler?
             elif "no target" in datal:
-                status_line = f"{ts} | no target"
+                status_line = f"{ts} | room={room_id} | free"
 
             else:
                 # Ignore unrelated lines, but still log them

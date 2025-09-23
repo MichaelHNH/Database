@@ -13,7 +13,6 @@ rooms = [
     {"id": 7, "name": "D164", "is_free": True},
     {"id": 8, "name": "D166", "is_free": True},
 ]
-
 @app.route('/')
 def index():
     return render_template("map1.html", rooms=rooms)

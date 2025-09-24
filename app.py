@@ -1,5 +1,5 @@
-from flask import Flask, render_template
-
+from flask import Flask, render_template, request, redirect, url_for
+import sqlite3
 app = Flask(__name__)
 
 #rumnumre
@@ -62,8 +62,6 @@ def room_status(room_id):
         pass
     return is_free
 
-from flask import request, redirect, url_for
-import sqlite3
 
 @app.route('/book/<int:room_id>', methods=["GET", "POST"])
 def book(room_id):

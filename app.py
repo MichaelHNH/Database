@@ -46,22 +46,53 @@ def rummap(room_id):
     return render_template("rummap.html", room=room)
 
 def room_status(room_id):
-    is_free = True #gør standard til = ledigt
+    is_free = True#gør standard til = ledigt
     try:
         with open("database.txt", "r", encoding="utf-8") as f:
             lines = f.readlines()
             # læser fra bunden, da txt filen nok opdatere, og så finder status på rummene #Højst sandsynligt ændres data base til sqlite
             for line in reversed(lines):
                 if f"room={room_id}" in line:
-                    if "occupied" in line:
+                    if "| occupied" in line:
                         is_free = False
-                    elif "free" in line:
+                    elif "| free" in line:
                         is_free = True
                     break
     except FileNotFoundError:
         pass
     return is_free
 
+from flask import request, redirect, url_for
+import sqlite3
+
+@app.route('/book/<int:room_id>', methods=["GET", "POST"])
+def book(room_id):
+    if request.method == "POST":
+        user = request.form["user"]
+        start = request.form["start_time"]
+        end = request.form["end_time"]
+
+        con = sqlite3.connect("bdatabase.db")
+        cur = con.cursor()
+        cur.execute(
+            "INSERT INTO bookings (room_id, user, start_time, end_time) VALUES (?, ?, ?, ?)",
+            (room_id, user, start, end)
+        )
+        con.commit()
+        con.close()
+
+        return redirect(url_for("rummap", room_id=room_id))
+
+    return render_template("book.html", room_id=room_id)
+
+@app.route('/bookings')
+def show_bookings():
+    con = sqlite3.connect("bdatabase.db")
+    cur = con.cursor()
+    cur.execute("SELECT * FROM bookings")
+    rows = cur.fetchall()
+    con.close()
+    return str(rows)
 
 if __name__ == '__main__':
     app.run(debug=True)

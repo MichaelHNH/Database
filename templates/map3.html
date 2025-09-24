@@ -54,7 +54,8 @@
            width="800" height="600" />
 
     <a href="/room/1">
-      <polygon id="D316a" class="room ledigt"
+      <polygon id="D316a"
+               class="room {% if rooms[0].is_free %}ledigt{% else %}optaget{% endif %}"
                points="304,140 323,140 321,151 302,149"></polygon>
     </a>
     <a href="/room/2">

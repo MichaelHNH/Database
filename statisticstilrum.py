@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from collections import defaultdict
 
-LOG_FILE = "database.txt"
+LOG_FILE = "database.db.py"
 
 
 def parse_log_line(line):

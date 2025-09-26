@@ -22,8 +22,8 @@
     */
       #define MONITOR_SERIAL Serial
       #define RADAR_SERIAL Serial1
-      #define RADAR_RX_PIN 16
-      #define RADAR_TX_PIN 17
+      #define RADAR_RX_PIN 21 /* vores RXpin er nu loddet fast, så det her kan IKKE ændres*/
+      #define RADAR_TX_PIN 22 /* vores TXpin er nu loddet fast, så det her kan IKKE ændres*/
 /*    #elif CONFIG_IDF_TARGET_ESP32S2
       #define MONITOR_SERIAL Serial
       #define RADAR_SERIAL Serial1

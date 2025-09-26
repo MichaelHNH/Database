@@ -25,6 +25,13 @@ def readarduino():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         status_line = None
+    while True:
+        if ser.in_waiting > 0:  # only read if data is available
+            data = ser.readline().decode(errors='ignore').strip()
+            datal = data.lower()
+            # Nuværende tid
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            status_line = None
 
         # Match both stationary and moving targets
         m = re.search(r"(stationary|moving) target: (\d+)cm energy:(\d+)", datal)
@@ -48,7 +55,6 @@ def readarduino():
                 users.commit()
 
         return status_line
-
 if __name__ == '__main__':
     while True:
         status = readarduino()

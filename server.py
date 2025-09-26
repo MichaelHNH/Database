@@ -32,7 +32,6 @@ def readarduino():
 
         if m:
             _, dist, energy = m.groups()
-            status_line = f"{ts} | room={room_id} | occupied | distance={dist} | energy={energy}"  # Måske mange ligegyldige variabler?
             with sqlite3.connect("database.db") as users:
                 cursor = users.cursor()
                 cursor.execute("INSERT INTO LEDIGHED \
@@ -41,17 +40,12 @@ def readarduino():
                 users.commit()
 
         elif "no target" in datal:
-            status_line = f"{ts} | room={room_id} | free"
             with sqlite3.connect("database.db") as users:
                 cursor = users.cursor()
                 cursor.execute("INSERT INTO LEDIGHED \
                 (ts,room_id,ledighed) VALUES (?,?,?)",
                                (ts, room_id, "free"))
                 users.commit()
-
-        else:
-            # Ignore unrelated lines, but still log them
-            status_line = f"{ts} | unknown | raw={data}"
 
         return status_line
 

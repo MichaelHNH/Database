@@ -1,5 +1,5 @@
-from flask import Flask, render_template
-
+from flask import Flask, render_template,jsonify
+from Statistik_sqlite import get_occupancy_data
 app = Flask(__name__)
 
 #rumnumre
@@ -62,6 +62,11 @@ def room_status(room_id):
         pass
     return is_free
 
+@app.route('/data')
+def data():
+    """Leverer data til grafen i JSON-format."""
+    occupancy_data = get_occupancy_data()
+    return jsonify(occupancy_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

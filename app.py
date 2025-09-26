@@ -48,22 +48,21 @@ def rummap(room_id):
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
 
-def room_status(room_id):
-    is_free = True#gør standard til = ledigt
-    try:
-        with open("database.txt", "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            # læser fra bunden, da txt filen nok opdatere, og så finder status på rummene #Højst sandsynligt ændres data base til sqlite
-            for line in reversed(lines):
-                if f"room={room_id}" in line:
-                    if "| occupied" in line:
-                        is_free = False
-                    elif "| free" in line:
-                        is_free = True
-                    break
-    except FileNotFoundError:
-        pass
-    return is_free
+
+def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
+    con = sqlite3.connect("database.db")#Tag data fra databasen
+    cur = con.cursor()
+    cur.execute("""
+        SELECT ledighed FROM LEDIGHED 
+        WHERE room_id = ? 
+        ORDER BY ts DESC LIMIT 1
+    """, (room_id,))
+    row = cur.fetchone()
+    con.close()
+
+    if row:
+        return row[0] == "free"
+    return True  # default = ledigt
 
 @app.route('/data')
 def data():

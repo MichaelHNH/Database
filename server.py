@@ -5,7 +5,7 @@ import sqlite3
 from datetime import datetime
 
 # Open the serial connection (adjust COM port and baudrate if needed)
-ser = serial.Serial('COM4', 115200, timeout=1)
+ser = serial.Serial('/dev/cu.usbserial-58EF0570731', 115200, timeout=1)
 connect = sqlite3.connect('database.db')
 connect.execute(
     'CREATE TABLE IF NOT EXISTS LEDIGHED (ts TEXT, \
@@ -15,7 +15,8 @@ connect.execute(
     'CREATE TABLE IF NOT EXISTS CO2DATA (ts TEXT, \
     room_id TEXT, co2ppm INTEGER)'
 )
-
+connect.commit()
+connect.close()
 
 def readarduino():
     """Reads a line from Arduino, logs it with timestamp, and returns status info"""

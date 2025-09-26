@@ -1,4 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+import sqlite3
+
+from Statistik_sqlite import get_occupancy_data
 
 app = Flask(__name__)
 

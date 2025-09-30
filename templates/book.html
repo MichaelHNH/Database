@@ -8,8 +8,8 @@
 <h1>Book rum {{ room_id }}</h1>
     <form method="post">
       Navn: <input type="text" name="user" required><br><br>
-      Starttid: <input type="time" name="start_time" required><br><br>
-      Sluttid: <input type="time" name="end_time" required><br><br>
+      Start: <input type="datetime-local" name="start_time" required><br><br>
+      Slut: <input type="datetime-local" name="end_time" required><br><br>
       <button type="submit">Book</button>
     </form>
 </body>

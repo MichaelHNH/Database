@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Grupperumskort</title>
+      <meta http-equiv="refresh" content="300">
   <style>
     body {
       background: radial-gradient(circle at center, #2b2b2b 0%, #111 60%, #000 100%);
@@ -59,8 +60,8 @@
                points="304,140 323,140 321,151 302,149"></polygon>
     </a>
     <a href="/room/2">
-      <polygon id="D315" class="room ledigt"
-               points="301,150 321,151 319,161 300,160"></polygon>
+      <polygon id="D315"  class="room {% if rooms[1].is_free %}ledigt{% else %}optaget{% endif %}"
+           points="301,150 321,151 319,161 300,160"></polygon>
     </a>
   </svg>
   </div>

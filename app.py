@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
 from Statistik_sqlite import get_occupancy_data
+from datetime import datetime
 
 
 
@@ -28,22 +29,17 @@ def index():
 
 @app.route('/map1')
 def map1():
-    # Opdater rum-status fra database.txt
-    for r in rooms:
-        r["is_free"] = room_status(r["id"])
+    opdater_status()
     return render_template("map1.html", rooms=rooms)
-
 
 @app.route('/map2')
 def map2():
-    for r in rooms:
-        r["is_free"] = room_status(r["id"])
+    opdater_status()
     return render_template("map2.html", rooms=rooms)
 
 @app.route('/map3')
 def map3():
-    for r in rooms:
-        r["is_free"] = room_status(r["id"])
+    opdater_status()
     return render_template("map3.html", rooms=rooms)
 
 #Viser rum baseret på id
@@ -53,6 +49,13 @@ def rummap(room_id):
     if not room:
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
+
+def opdater_status():
+    #Opdaterer status for rummene
+    for r in rooms:
+        arduino_status = room_status(r["id"])
+        booking_status = is_booked(r["id"])
+        r["is_free"] = (arduino_status and not booking_status)
 
 
 def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
@@ -70,6 +73,23 @@ def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
         return row[0] == "free"
     return True  # default = ledigt
 
+def is_booked(room_id: int) -> bool:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    con = sqlite3.connect(DB_BOOKINGS)
+    cur = con.cursor()
+    cur.execute("""
+        SELECT COUNT(*) FROM bookings
+        WHERE room_id = ?
+        AND datetime(start_time) <= datetime(?)
+        AND datetime(end_time) >= datetime(?)
+    """, (room_id, now, now))
+    count = cur.fetchone()[0]
+    con.close()
+
+    return count > 0
+
+
 @app.route('/data')
 def data():
     """Leverer data til grafen i JSON-format."""
@@ -80,8 +100,9 @@ def data():
 def book(room_id):
     if request.method == "POST":
         user = request.form["user"]
-        start = request.form["start_time"]
-        end = request.form["end_time"]
+        start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+        end   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+
 
         con = sqlite3.connect(DB_BOOKINGS)
         cur = con.cursor()
@@ -91,6 +112,7 @@ def book(room_id):
         )
         con.commit()
         con.close()
+        opdater_status()
 
         return redirect(url_for("rummap", room_id=room_id))
 

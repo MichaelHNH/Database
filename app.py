@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
-
+import os
 from Statistik_sqlite import get_occupancy_data
 
+
+
 app = Flask(__name__)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_ARDUINO = os.path.join(BASE_DIR, "database.db")   # til LEDIGHED og CO2DATA
+DB_BOOKINGS = os.path.join(BASE_DIR, "bdatabase.db") # til bookings
 
 #rumnumre
 rooms = [
@@ -50,7 +56,7 @@ def rummap(room_id):
 
 
 def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
-    con = sqlite3.connect("database.db")#Tag data fra databasen
+    con = sqlite3.connect(DB_ARDUINO)#Tag data fra databasend
     cur = con.cursor()
     cur.execute("""
         SELECT ledighed FROM LEDIGHED 
@@ -77,7 +83,7 @@ def book(room_id):
         start = request.form["start_time"]
         end = request.form["end_time"]
 
-        con = sqlite3.connect("bdatabase.db")
+        con = sqlite3.connect(DB_BOOKINGS)
         cur = con.cursor()
         cur.execute(
             "INSERT INTO bookings (room_id, user, start_time, end_time) VALUES (?, ?, ?, ?)",
@@ -90,14 +96,45 @@ def book(room_id):
 
     return render_template("book.html", room_id=room_id)
 
+
 @app.route('/bookings')
 def show_bookings():
-    con = sqlite3.connect("bdatabase.db")
+    con = sqlite3.connect(DB_BOOKINGS)
     cur = con.cursor()
     cur.execute("SELECT * FROM bookings")
     rows = cur.fetchall()
     con.close()
     return str(rows)
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    data = request.json
+    ts = data.get("ts")
+    room_id = data.get("room_id")
+    ledighed = data.get("ledighed")
+    co2ppm = data.get("co2ppm")
+
+    con = sqlite3.connect(DB_ARDUINO)
+    cur = con.cursor()
+
+    if ledighed:
+        cur.execute(
+            "INSERT INTO LEDIGHED (ts, room_id, ledighed) VALUES (?, ?, ?)",
+            (ts, room_id, ledighed)
+        )
+
+    if co2ppm is not None:
+        cur.execute(
+            "INSERT INTO CO2DATA (ts, room_id, co2ppm) VALUES (?, ?, ?)",
+            (ts, room_id, co2ppm)
+        )
+
+    con.commit()
+    con.close()
+
+    return {"status": "ok"}
+
 
 if __name__ == '__main__':
     app.run(debug=True)

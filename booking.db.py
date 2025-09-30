@@ -2,6 +2,7 @@ import sqlite3
 
 con = sqlite3.connect("bdatabase.db")
 cur = con.cursor()
+
 #Lav tabel
 cur.execute("""
 CREATE TABLE IF NOT EXISTS rooms (
@@ -33,7 +34,6 @@ rooms = [
 
 cur.executemany("INSERT OR IGNORE INTO rooms (id, name) VALUES (?, ?)", rooms)
 
-import sqlite3
 
 def get_bookings():
     con = sqlite3.connect("bdatabase.db")

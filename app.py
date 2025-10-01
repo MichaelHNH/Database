@@ -136,15 +136,39 @@ def data():
 def book(room_id):
     if request.method == "POST":
         user = request.form["user"]
-        start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
-        end   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+        start_dt = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M")
+        end_dt   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M")
 
+        # udregner hvor meget tid de har brugt
+        requested_minutes = (end_dt - start_dt).total_seconds() / 60
 
+        # checker hvor meget tid hver en given bruger har brugt den dag.
         con = sqlite3.connect(DB_BOOKINGS)
         cur = con.cursor()
+        day_start = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end   = start_dt.replace(hour=23, minute=59, second=59)
+
+        cur.execute("""
+            SELECT start_time, end_time FROM bookings
+            WHERE user = ?
+            AND date(start_time) = date(?)
+        """, (user, start_dt.strftime("%Y-%m-%d")))
+        rows = cur.fetchall()
+
+        total_booked_minutes = 0
+        for row in rows:
+            b_start = datetime.strptime(row[0], "%Y-%m-%d %H:%M")
+            b_end   = datetime.strptime(row[1], "%Y-%m-%d %H:%M")
+            total_booked_minutes += (b_end - b_start).total_seconds() / 60
+
+        if total_booked_minutes + requested_minutes > 120:  # 2 hours limit
+            con.close()
+            return f"Booking denied. You already have {total_booked_minutes:.0f} minutes booked today. Maximum is 2 hours."
+
+        # booking indsættes i skemaet hvis det er inde for grænsen
         cur.execute(
             "INSERT INTO bookings (room_id, user, start_time, end_time) VALUES (?, ?, ?, ?)",
-            (room_id, user, start, end)
+            (room_id, user, start_dt.strftime("%Y-%m-%d %H:%M"), end_dt.strftime("%Y-%m-%d %H:%M"))
         )
         con.commit()
         con.close()

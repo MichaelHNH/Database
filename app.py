@@ -50,8 +50,47 @@ def rummap(room_id):
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
 
+
+from datetime import timedelta
+
+
+def fjernubrugtebookinger():
+    now = datetime.now()
+    con_arduino = sqlite3.connect(DB_ARDUINO)
+    cur_arduino = con_arduino.cursor()
+
+    con_bookings = sqlite3.connect(DB_BOOKINGS)
+    cur_bookings = con_bookings.cursor()
+
+    for r in rooms:
+        room_id = r["id"]
+        cur_arduino.execute("""
+            SELECT ts, ledighed FROM LEDIGHED
+            WHERE room_id = ?
+            ORDER BY ts DESC LIMIT 1
+        """, (room_id,))
+        row = cur_arduino.fetchone()
+
+        if row:
+            ts, ledighed = row
+            ts_dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            if ledighed == "free" and now - ts_dt > timedelta(minutes=15):
+                # Remove bookings that are currently active
+                cur_bookings.execute("""
+                    DELETE FROM bookings
+                    WHERE room_id = ?
+                    AND datetime(start_time) <= datetime(?)
+                    AND datetime(end_time) >= datetime(?)
+                """, (room_id, now.strftime("%Y-%m-%d %H:%M"), now.strftime("%Y-%m-%d %H:%M")))
+                con_bookings.commit()
+
+    con_arduino.close()
+    con_bookings.close()
+
+
 def opdater_status():
     #Opdaterer status for rummene
+    fjernubrugtebookinger()
     for r in rooms:
         arduino_status = room_status(r["id"])
         booking_status = is_booked(r["id"])

@@ -3,7 +3,7 @@ import sqlite3
 import os
 from Statistik_sqlite import get_occupancy_data
 from datetime import datetime
-
+from datetime import timedelta
 
 
 app = Flask(__name__)
@@ -49,9 +49,6 @@ def rummap(room_id):
     if not room:
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
-
-
-from datetime import timedelta
 
 
 def fjernubrugtebookinger():

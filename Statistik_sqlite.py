@@ -1,10 +1,16 @@
-import sqlite3
+import sqlite3, os
+try:
+    from app import DB_ARDUINO
+except ImportError:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_ARDUINO = os.path.join(BASE_DIR, "database.db")
+
 
 
 def get_occupancy_data():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    con = sqlite3.connect(DB_ARDUINO)
+    con.row_factory = sqlite3.Row
+    cursor = con.cursor()
 
     query = """
     SELECT
@@ -22,10 +28,9 @@ def get_occupancy_data():
 
     cursor.execute(query)
     rows = cursor.fetchall()
-    conn.close()
+    con.close()
 
     labels = [row['hour'] for row in rows]
     data = [row['occupied_percentage'] for row in rows]
 
     return {'labels': labels, 'data': data}
-

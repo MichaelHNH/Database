@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
 import sqlite3
 import os
-from Statistik_sqlite import get_occupancy_data
+from database import get_occupancy_data
 from datetime import datetime
 
 
@@ -193,7 +193,14 @@ def upload():
     con.close()
 
     return {"status": "ok"}
-
+@app.route('/db')
+def show_db_data():
+    con = sqlite3.connect(DB_ARDUINO)
+    cur = con.cursor()
+    cur.execute("SELECT * FROM LEDIGHED")
+    rows = cur.fetchall()
+    con.close()
+    return str(rows)
 
 
 if __name__ == '__main__':

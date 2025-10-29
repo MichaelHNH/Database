@@ -1,10 +1,10 @@
 import sqlite3
-from app import DB_ARDUINO
+
 
 def get_occupancy_data():
-    conn = sqlite3.connect(DB_ARDUINO)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    con = sqlite3.connect('database.db')
+    con.row_factory = sqlite3.Row
+    cursor = con.cursor()
 
     query = """
     SELECT
@@ -22,9 +22,10 @@ def get_occupancy_data():
 
     cursor.execute(query)
     rows = cursor.fetchall()
-    conn.close()
+    con.close()
 
     labels = [row['hour'] for row in rows]
     data = [row['occupied_percentage'] for row in rows]
 
     return {'labels': labels, 'data': data}
+

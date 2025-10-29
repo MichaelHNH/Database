@@ -1,16 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
 import sqlite3
 import os
 from Statistik_sqlite import get_occupancy_data
 from datetime import datetime
-from datetime import timedelta
+
+
 
 
 app = Flask(__name__)
+app.secret_key = "nøglehemmelig"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_ARDUINO = os.path.join(BASE_DIR, "database.db")   # til LEDIGHED og CO2DATA
 DB_BOOKINGS = os.path.join(BASE_DIR, "bdatabase.db") # til bookings
+
+# pt hardcorded brugere
+USERS = {
+    "sara": "1234",
+    "michael": "123",
+    "lærer": "lærer123"
+}
+
 
 #rumnumre
 rooms = [
@@ -50,44 +60,8 @@ def rummap(room_id):
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
 
-
-def fjernubrugtebookinger():
-    now = datetime.now()
-    con_arduino = sqlite3.connect(DB_ARDUINO)
-    cur_arduino = con_arduino.cursor()
-
-    con_bookings = sqlite3.connect(DB_BOOKINGS)
-    cur_bookings = con_bookings.cursor()
-
-    for r in rooms:
-        room_id = r["id"]
-        cur_arduino.execute("""
-            SELECT ts, ledighed FROM LEDIGHED
-            WHERE room_id = ?
-            ORDER BY ts DESC LIMIT 1
-        """, (room_id,))
-        row = cur_arduino.fetchone()
-
-        if row:
-            ts, ledighed = row
-            ts_dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-            if ledighed == "free" and now - ts_dt > timedelta(minutes=15):
-                # Remove bookings that are currently active
-                cur_bookings.execute("""
-                    DELETE FROM bookings
-                    WHERE room_id = ?
-                    AND datetime(start_time) <= datetime(?)
-                    AND datetime(end_time) >= datetime(?)
-                """, (room_id, now.strftime("%Y-%m-%d %H:%M"), now.strftime("%Y-%m-%d %H:%M")))
-                con_bookings.commit()
-
-    con_arduino.close()
-    con_bookings.close()
-
-
 def opdater_status():
     #Opdaterer status for rummene
-    fjernubrugtebookinger()
     for r in rooms:
         arduino_status = room_status(r["id"])
         booking_status = is_booked(r["id"])
@@ -132,52 +106,55 @@ def data():
     occupancy_data = get_occupancy_data()
     return jsonify(occupancy_data)
 
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username in USERS and USERS[username] == password:
+            session["user"] = username
+            flash("Hej, " + username, "success")
+            return redirect(url_for("index"))
+        else:
+            flash("Noget er vidst skrevet forkert, hmm.", "error")
+            return redirect(url_for("login"))
+
+    return render_template("login.html")
+
+
+@app.route('/logout')
+def logout():
+    session.pop("user", None)
+    flash("Du er nu logget ud", "info")
+    return redirect(url_for("index"))
+
+
 @app.route('/book/<int:room_id>', methods=["GET", "POST"])
 def book(room_id):
+    if "user" not in session:
+        flash("Du kan ikke book uden at logge ind", "error")
+        return redirect(url_for("login"))
+
     if request.method == "POST":
-        user = request.form["user"]
-        start_dt = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M")
-        end_dt   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M")
+        user = session["user"]
+        start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+        end   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
 
-        # udregner hvor meget tid de har brugt
-        requested_minutes = (end_dt - start_dt).total_seconds() / 60
-
-        # checker hvor meget tid hver en given bruger har brugt den dag.
         con = sqlite3.connect(DB_BOOKINGS)
         cur = con.cursor()
-        day_start = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end   = start_dt.replace(hour=23, minute=59, second=59)
-
-        cur.execute("""
-            SELECT start_time, end_time FROM bookings
-            WHERE user = ?
-            AND date(start_time) = date(?)
-        """, (user, start_dt.strftime("%Y-%m-%d")))
-        rows = cur.fetchall()
-
-        total_booked_minutes = 0
-        for row in rows:
-            b_start = datetime.strptime(row[0], "%Y-%m-%d %H:%M")
-            b_end   = datetime.strptime(row[1], "%Y-%m-%d %H:%M")
-            total_booked_minutes += (b_end - b_start).total_seconds() / 60
-
-        if total_booked_minutes + requested_minutes > 120:  # 2 hours limit
-            con.close()
-            return f"Booking denied. You already have {total_booked_minutes:.0f} minutes booked today. Maximum is 2 hours."
-
-        # booking indsættes i skemaet hvis det er inde for grænsen
         cur.execute(
             "INSERT INTO bookings (room_id, user, start_time, end_time) VALUES (?, ?, ?, ?)",
-            (room_id, user, start_dt.strftime("%Y-%m-%d %H:%M"), end_dt.strftime("%Y-%m-%d %H:%M"))
+            (room_id, user, start, end)
         )
         con.commit()
         con.close()
         opdater_status()
 
+        flash(f"Booking oprettet af {user} for rum {room_id}!", "success")
         return redirect(url_for("rummap", room_id=room_id))
 
     return render_template("book.html", room_id=room_id)
-
 
 @app.route('/bookings')
 def show_bookings():
@@ -216,6 +193,7 @@ def upload():
     con.close()
 
     return {"status": "ok"}
+
 
 
 if __name__ == '__main__':

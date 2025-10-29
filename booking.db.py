@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL)
 """)
+
 #Specifikt ID, Rum id, User navn, start og slut tid, og test om rum id findes
 cur.execute("""
 CREATE TABLE IF NOT EXISTS bookings (

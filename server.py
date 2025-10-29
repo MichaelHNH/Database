@@ -10,14 +10,14 @@ ser = serial.Serial('/dev/cu.usbserial-58EF0570731', 115200, timeout=1)
 def send_to_server(ts, room_id, ledighed=None, co2ppm=None):
     url = "https://MichaelH.pythonanywhere.com/upload"
     payload = {
-        "ts": ts,
-        "room_id": room_id,
-        "ledighed": ledighed,
-        "co2ppm": co2ppm
+        "ts": ts,#timestamp
+        "room_id": room_id,#Rumid
+        "ledighed": ledighed,#er det ledigt?
+        "co2ppm": co2ppm #co2?
     }
     try:
         r = requests.post(url, json=payload, timeout=5)
-        print("Oploader:", r.status_code, r.text)
+        print("Oploader:", r.status_code, r.text)#burde sende 200 = success at sende
     except Exception as e:
         print("Kunne ikke opload data", e)
 
@@ -29,7 +29,7 @@ def readarduino():
         datal = data.lower()
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status_line = None
-        room_id = 1  # adjust if multiple rooms/sensors
+        room_id = 2  # adjust if multiple rooms/sensors
         m = re.search(r"(stationary|moving) target: (\d+)cm energy:(\d+)", datal)
         if m:
             _, dist, energy = m.groups()
@@ -46,10 +46,6 @@ def readarduino():
             co2ppm = int(co2_match.group(1))
             send_to_server(ts, room_id, co2ppm=co2ppm)
             status_line = f"{ts} | room={room_id} | CO2={co2ppm} ppm"
-
-        # --- Unknown line fallback ---
-        if status_line is None:
-            status_line = f"{ts} | unknown | raw={data}"
 
         # Print to console as well
         print(status_line)

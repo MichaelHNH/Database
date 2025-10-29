@@ -5,6 +5,16 @@
   <title>Book rum</title>
 </head>
 <body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul id="flashes">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <h1>Book rum {{ room_id }}</h1>
     <form method="post">
       Navn: <input type="text" name="user" required><br><br>

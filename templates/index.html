@@ -5,6 +5,15 @@
         <title>Grupperum</title>
     </head>
     <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul id="flashes">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
         <h1>Status for grupperum</h1>
         <ul>
             {% for room in rooms %}

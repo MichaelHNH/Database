@@ -48,9 +48,38 @@
     .up { top: 20px;
     }
 
+
+        .logout {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2em;
+  background: rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.logout:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+
   </style>
 </head>
+{% if session.get('user') %}
+  <a href="{{ url_for('logout') }}" class="logout">Log ud ({{ session['user'] }})</a>
+{% endif %}
 <body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul id="flashes">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
   <div class="map-rundt">
    <svg viewBox="0 0 800 600">
     <image href="{{ url_for('static', filename='Aktiv 1.svg') }}"

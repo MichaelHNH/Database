@@ -108,6 +108,7 @@ def data():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+    next = request.form.get("next") or request.args.get("next")
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -115,7 +116,7 @@ def login():
         if username in USERS and USERS[username] == password:
             session["user"] = username
             flash("Hej, " + username, "success")
-            return redirect(url_for("index"))
+            return redirect(next or url_for("index"))
         else:
             flash("Noget er vidst skrevet forkert, hmm.", "error")
             return redirect(url_for("login"))
@@ -129,17 +130,42 @@ def logout():
     flash("Du er nu logget ud", "info")
     return redirect(url_for("index"))
 
+def bookingkonflikt(room_id: int, start_time: str, end_time: str, current_user: str) -> bool:
+    con = sqlite3.connect(DB_BOOKINGS)#returnerer true elelr false, tjekker om en user har booket lokalet
+    cur = con.cursor()
+    cur.execute("""
+        SELECT COUNT(*) FROM bookings
+        WHERE room_id = ?
+          AND datetime(start_time) < datetime(?)
+          AND datetime(end_time)   > datetime(?)
+          AND user <> ?
+    """, (room_id, end_time, start_time, current_user))
+    count = cur.fetchone()[0]
+    con.close()
+    return count > 0
+
 
 @app.route('/book/<int:room_id>', methods=["GET", "POST"])
 def book(room_id):
     if "user" not in session:
-        flash("Du kan ikke book uden at logge ind", "error")
-        return redirect(url_for("login"))
+        target = url_for("book", room_id=room_id)
+        if request.method == "POST":
+            flash("Du skal logge ind for at kunne booke et rum!", "error")
+        return redirect(url_for("login", next=target))
+
+    user = session["user"]
 
     if request.method == "POST":
-        user = session["user"]
         start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
-        end   = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+        end   = datetime.strptime(request.form["end_time"],   "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+
+        if end <= start:
+            flash("Sluttidspunktet skal være efter starttidspunktet.", "error")
+            return redirect(url_for("book", room_id=room_id))
+
+        if bookingkonflikt(room_id, start, end, user):
+            flash("Dette rum er allerede booket på dette tidspunkt", "error")
+            return redirect(url_for("book", room_id=room_id))
 
         con = sqlite3.connect(DB_BOOKINGS)
         cur = con.cursor()
@@ -155,6 +181,7 @@ def book(room_id):
         return redirect(url_for("rummap", room_id=room_id))
 
     return render_template("book.html", room_id=room_id)
+
 
 @app.route('/bookings')
 def show_bookings():

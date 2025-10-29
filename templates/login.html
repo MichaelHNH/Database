@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <form method="post">
+    <label>Brugernavn:</label><br>
+    <input type="text" name="username" required><br><br>
+    <label>Adgangskode:</label><br>
+    <input type="password" name="password" required><br><br>
+    <button type="submit">Log ind</button>
+  </form>
+  <br>
+  <a href="{{ url_for('index') }}">Tilbage til kort</a>
+</body>
+</html>

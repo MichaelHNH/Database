@@ -5,13 +5,12 @@ import sqlite3
 from datetime import datetime
 import requests
 
-nr_id = 1
-presence_sensor = 1
+presence_sensor = 3
 CO2_sensor = 2
 # Open the serial connection (adjust COM port and baudrate if needed)
 ser = serial.Serial('/dev/cu.usbserial-58EF0570731', 115200, timeout=1)
 
-def send_to_server(ts, sensor_id, værdi ):
+def send_to_server(ts, sensor_id, værdi, nr_id):
     url = "https://MichaelH.pythonanywhere.com/upload"
     payload = {
         "nr_id": nr_id,
@@ -45,22 +44,20 @@ def readarduino():
             sensor_id = presence_sensor
             _, dist, energy = m.groups()
             status_line = f"{ts} | sensor_id={sensor_id} | værdi={værdi} | distance={dist} | energy={energy}"
-            send_to_server(nr_id, ts, sensor_id, værdi)
+            send_to_server(ts, sensor_id, værdi, nr_id)
 
         elif "no target" in datal:
             værdi = "free"
             sensor_id = presence_sensor
             status_line = f"{ts} | sensor_id={sensor_id} | værdi={værdi} "
-            send_to_server(nr_id, ts, sensor_id, værdi)
-            nr_id += 1
+            send_to_server(ts, sensor_id, værdi, nr_id)
 
         co2_match = re.search(r"co2[:= ]+(\d+)", datal)
         if co2_match:
             sensor_id = CO2_sensor
             værdi = int(co2_match.group(1))
-            send_to_server(nr_id, ts, sensor_id, værdi)
+            send_to_server(ts, sensor_id, værdi, nr_id)
             status_line = f"{ts} | room={sensor_id} | CO2={værdi} ppm"
-            nr_id += 1
 
         # Print to console as well
         print(status_line)

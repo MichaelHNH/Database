@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 import sqlite3
 import os
 from database import get_occupancy_data
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 
@@ -51,6 +51,44 @@ def map2():
 def map3():
     opdater_status()
     return render_template("map3.html", rooms=rooms)
+
+def luk_book():
+    now = datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M")
+    two_min_ago = (now - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M")
+
+    # tjek alle aktive bookinger
+    con = sqlite3.connect(DB_BOOKINGS)
+    cur = con.cursor()
+    cur.execute("""
+        SELECT id, room_id FROM bookings
+        WHERE datetime(start_time) <= datetime(?)
+          AND datetime(end_time)   >= datetime(?)
+          AND datetime(start_time) <= datetime(?)
+    """, (now_str, now_str, two_min_ago))
+    rows = cur.fetchall()
+
+    # tjek for sensor
+    updated = False
+    for booking_id, room_id in rows:
+        if room_status(room_id):
+            cur.execute(
+                "UPDATE bookings SET end_time = ? WHERE id = ?",
+                (now_str, booking_id)
+            )
+            updated = True
+
+    if updated:
+        con.commit()
+    con.close()
+
+def opdater_status():
+    luk_book()
+    for r in rooms:
+        arduino_status = room_status(r["id"])
+        booking_status = is_booked(r["id"])
+        r["is_free"] = (arduino_status and not booking_status)
+
 
 #Viser rum baseret på id
 @app.route('/room/<int:room_id>')
@@ -204,6 +242,22 @@ def upload():
     con = sqlite3.connect(DB_ARDUINO)
     cur = con.cursor()
 
+#logger alt data, laver en tabel
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS SENSOR_LOG (
+            nr_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT,
+            room_id INTEGER,
+            ledighed TEXT,
+            co2ppm INTEGER
+        )
+    """)
+
+#Indsæt dataet
+    cur.execute(
+        "INSERT INTO SENSOR_LOG (ts, room_id, ledighed, co2ppm) VALUES (?, ?, ?, ?)",
+        (ts, room_id, ledighed, co2ppm)
+    )
     if ledighed:
         cur.execute(
             "INSERT INTO LEDIGHED (ts, room_id, ledighed) VALUES (?, ?, ?)",
@@ -220,6 +274,7 @@ def upload():
     con.close()
 
     return {"status": "ok"}
+
 @app.route('/db')
 def show_db_data():
     con = sqlite3.connect(DB_ARDUINO)

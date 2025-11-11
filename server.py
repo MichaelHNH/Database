@@ -13,7 +13,6 @@ ser = serial.Serial('/dev/cu.usbserial-58EF0570731', 115200, timeout=1)
 def send_to_server(ts, sensor_id, værdi, nr_id):
     url = "https://MichaelH.pythonanywhere.com/upload"
     payload = {
-        "nr_id": nr_id,
         "ts": ts,#timestamp
         "sensor_id": sensor_id,#Rumid
         "værdi": værdi #er det ledigt?
@@ -28,7 +27,6 @@ def send_to_server(ts, sensor_id, værdi, nr_id):
 def readarduino():
     global presence_sensor
     global CO2_sensor
-    global nr_id
 
     """Reads a line from Arduino, logs it with timestamp, and returns status info"""
     if ser.in_waiting > 0:  # only read if data is available
@@ -44,19 +42,19 @@ def readarduino():
             sensor_id = presence_sensor
             _, dist, energy = m.groups()
             status_line = f"{ts} | sensor_id={sensor_id} | værdi={værdi} | distance={dist} | energy={energy}"
-            send_to_server(ts, sensor_id, værdi, nr_id)
+            send_to_server(ts, sensor_id, værdi)
 
         elif "no target" in datal:
             værdi = "free"
             sensor_id = presence_sensor
             status_line = f"{ts} | sensor_id={sensor_id} | værdi={værdi} "
-            send_to_server(ts, sensor_id, værdi, nr_id)
+            send_to_server(ts, sensor_id, værdi)
 
         co2_match = re.search(r"co2[:= ]+(\d+)", datal)
         if co2_match:
             sensor_id = CO2_sensor
             værdi = int(co2_match.group(1))
-            send_to_server(ts, sensor_id, værdi, nr_id)
+            send_to_server(ts, sensor_id, værdi)
             status_line = f"{ts} | room={sensor_id} | CO2={værdi} ppm"
 
         # Print to console as well

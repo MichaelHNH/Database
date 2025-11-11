@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-app.secret_key = "nøglehemmelig"
+app.secret_key = "nøglehemmelig"#Gør at den "husker" brugeren er logget ind
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))#De to databaser (TIL PA)
 DB_ARDUINO = os.path.join(BASE_DIR, "database.db")   # til LEDIGHED og CO2DATA
 DB_BOOKINGS = os.path.join(BASE_DIR, "bdatabase.db") # til bookings
 
@@ -36,14 +36,14 @@ Rrooms = [
 
 
 def broom():
-    # Ændre ikke de globale rum
+    # Ændre ikke de globale rum#Laver en kopi af rumene, så de ikke ændres,
     rooms = [dict(r) for r in Rrooms]
 
-    luk_book()
+    luk_book()#luk book hvis det ikke er nogen
 
     for r in rooms:
-        arduino_status = room_status(r["id"])
-        booking_status = is_booked(r["id"])
+        arduino_status = room_status(r["id"])#Tjek hvad siger snesor
+        booking_status = is_booked(r["id"])#er der en booking
         r["is_free"] = (arduino_status and not booking_status)
     return rooms
 @app.route('/')
@@ -70,7 +70,7 @@ def luk_book():
     now = datetime.now()
     now_str = now.strftime("%Y-%m-%d %H:%M")
     two_min_ago = (now - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M")
-
+#Tjek nu, og fra to minutter siden
     # tjek alle aktive bookinger
     con = sqlite3.connect(DB_BOOKINGS)
     cur = con.cursor()
@@ -81,7 +81,7 @@ def luk_book():
           AND datetime(start_time) <= datetime(?)
     """, (now_str, now_str, two_min_ago))
     rows = cur.fetchall()
-
+#Tjek alle bookninger der er igang
     # tjek for sensor
     updated = False
     for booking_id, room_id in rows:
@@ -90,7 +90,7 @@ def luk_book():
                 "UPDATE bookings SET end_time = ? WHERE id = ?",
                 (now_str, booking_id)
             )
-            updated = True
+            updated = True#tjekker ved sensor om rummet faktisk er free#hvis ja, så stop bookingen
 
     if updated:
         con.commit()
@@ -106,7 +106,7 @@ def rummap(room_id):
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
 
-
+#Viser rummene, bruges når man trykker -> sendes til rummap (det er der hvor booking er)
 
 def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
     con = sqlite3.connect(DB_ARDUINO)#Tag data fra databasend
@@ -117,13 +117,13 @@ def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
         ORDER BY ts DESC LIMIT 1
     """, (room_id,))
     row = cur.fetchone()
-    con.close()
+    con.close()#Tjekker om rummene er ledige ud fra databasen ud fra sensorens data
 
     if row:
         return row[0] == "free"
     return True  # default = ledigt
 
-def is_booked(room_id: int) -> bool:
+def is_booked(room_id: int) -> bool:#tjek om rummene er booket
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     con = sqlite3.connect(DB_BOOKINGS)
@@ -147,7 +147,7 @@ def data():
     return jsonify(occupancy_data)
 
 @app.route('/login', methods=["GET", "POST"])
-def login():
+def login():#login og logout
     next = request.form.get("next") or request.args.get("next")
     if request.method == "POST":
         username = request.form["username"]
@@ -182,7 +182,7 @@ def bookingkonflikt(room_id: int, start_time: str, end_time: str, current_user: 
     """, (room_id, end_time, start_time, current_user))
     count = cur.fetchone()[0]
     con.close()
-    return count > 0
+    return count > 0#Tjekker om der allerede er en booking når en bruger prøver at book
 
 
 @app.route('/book/<int:room_id>', methods=["GET", "POST"])
@@ -224,7 +224,7 @@ def book(room_id):
 
 
 @app.route('/bookings')
-def show_bookings():
+def show_bookings():#baretest
     con = sqlite3.connect(DB_BOOKINGS)
     cur = con.cursor()
     cur.execute("SELECT * FROM bookings")
@@ -234,12 +234,13 @@ def show_bookings():
 
 
 @app.route('/upload', methods=['POST'])
-def upload():
+def upload():#Her sender den til PA
     data = request.json
     ts = data.get("ts")
     room_id = data.get("room_id")
     ledighed = data.get("ledighed")
     co2ppm = data.get("co2ppm")
+
 
     con = sqlite3.connect(DB_ARDUINO)
     cur = con.cursor()
@@ -258,7 +259,7 @@ def upload():
 #Indsæt dataet
     cur.execute(
         "INSERT INTO SENSOR_LOG (ts, room_id, ledighed, co2ppm) VALUES (?, ?, ?, ?)",
-        (ts, room_id, ledighed, co2ppm)
+        (ts, room_id, ledighed, co2ppm)#Logger alt i sensor log (skal nok ændres)
     )
     if ledighed:
         cur.execute(

@@ -23,7 +23,7 @@ USERS = {
 
 
 #rumnumre
-rooms = [
+Rrooms = [
     {"id": 1, "name": "D316a", "is_free": True},
     {"id": 2, "name": "D315", "is_free": True},
     {"id": 3, "name": "D223", "is_free": True},
@@ -33,23 +33,37 @@ rooms = [
     {"id": 7, "name": "D164", "is_free": True},
     {"id": 8, "name": "D166", "is_free": True},
 ]
+
+
+def broom():
+    # Ændre ikke de globale rum
+    rooms = [dict(r) for r in Rrooms]
+
+    luk_book()
+
+    for r in rooms:
+        arduino_status = room_status(r["id"])
+        booking_status = is_booked(r["id"])
+        r["is_free"] = (arduino_status and not booking_status)
+    return rooms
 @app.route('/')
 def index():
+    rooms = broom()
     return render_template("map1.html", rooms=rooms)
 
 @app.route('/map1')
 def map1():
-    opdater_status()
+    rooms = broom()
     return render_template("map1.html", rooms=rooms)
 
 @app.route('/map2')
 def map2():
-    opdater_status()
+    rooms = broom()
     return render_template("map2.html", rooms=rooms)
 
 @app.route('/map3')
 def map3():
-    opdater_status()
+    rooms = broom()
     return render_template("map3.html", rooms=rooms)
 
 def luk_book():
@@ -82,28 +96,16 @@ def luk_book():
         con.commit()
     con.close()
 
-def opdater_status():
-    luk_book()
-    for r in rooms:
-        arduino_status = room_status(r["id"])
-        booking_status = is_booked(r["id"])
-        r["is_free"] = (arduino_status and not booking_status)
-
 
 #Viser rum baseret på id
 @app.route('/room/<int:room_id>')
 def rummap(room_id):
+    rooms = broom()
     room = next((r for r in rooms if r["id"] == room_id), None)
     if not room:
         return "Dette er ikke et rum"
     return render_template("rummap.html", room=room)
 
-def opdater_status():
-    #Opdaterer status for rummene
-    for r in rooms:
-        arduino_status = room_status(r["id"])
-        booking_status = is_booked(r["id"])
-        r["is_free"] = (arduino_status and not booking_status)
 
 
 def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
@@ -213,7 +215,7 @@ def book(room_id):
         )
         con.commit()
         con.close()
-        opdater_status()
+        broom()
 
         flash(f"Booking oprettet af {user} for rum {room_id}!", "success")
         return redirect(url_for("rummap", room_id=room_id))

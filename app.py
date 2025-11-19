@@ -124,7 +124,7 @@ def room_status(room_id: int) -> bool:#Tjek om sandt eller falsk i stedet
     return True  # default = ledigt
 
 def is_booked(room_id: int) -> bool:#tjek om rummene er booket
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     con = sqlite3.connect(DB_BOOKINGS)
     cur = con.cursor()
@@ -196,9 +196,11 @@ def book(room_id):
     user = session["user"]
 
     if request.method == "POST":
-        start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
-        end   = datetime.strptime(request.form["end_time"],   "%Y-%m-%dT%H:%M").strftime("%Y-%m-%d %H:%M")
+        start = datetime.strptime(request.form["start_time"], "%Y-%m-%dT%H:%M")
+        end = datetime.strptime(request.form["end_time"], "%Y-%m-%dT%H:%M")
 
+        start = start.strftime("%Y-%m-%d %H:%M:%S")
+        end = end.strftime("%Y-%m-%d %H:%M:%S")
         if end <= start:
             flash("Sluttidspunktet skal være efter starttidspunktet.", "error")
             return redirect(url_for("book", room_id=room_id))
